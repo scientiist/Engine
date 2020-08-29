@@ -7,22 +7,39 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Procedural
+namespace JNgine
 {
     public class Camera : GameComponent
     {
 
         private Vector3 cameraPosition;
         private Vector3 cameraRotation;
-        private float cameraSpeed;
+        
         private Vector3 cameraLookAt;
         private Vector3 mouseRotationBuffer;
         private MouseState currentMouseState;
         private MouseState previousMouseState;
-        private float fieldOfView = MathHelper.PiOver4;
+        protected float fieldOfView = MathHelper.PiOver4;
 
+
+        public float ViewDistance { get; set; }
+
+        public float MouseRotationScaleX { get; set; }
+        public float MouseRotationScaleY { get; set; }
+
+        public float MoveSpeed { get; set; }
+
+        public float FieldOfView
+		{
+			get { return MathHelper.ToDegrees(fieldOfView); }
+            set { 
+                fieldOfView = MathHelper.ToRadians(value);
+                UpdateProjectionMatrix();
+            }
+		}
         public bool MouseLock { get; set; }
-
+        private bool mouseDown;
+        private Vector2 mouseDownPos;
         public Vector3 Position {
             get { return cameraPosition; }
             set {
@@ -38,7 +55,15 @@ namespace Procedural
             }
         }
 
-        public Matrix ProjectionMatrix {
+        protected virtual void UpdateProjectionMatrix()
+        {
+
+            float cappedFOV = (float)Math.Max(fieldOfView, 0.01f);
+            cappedFOV = (float)Math.Min(cappedFOV, Math.PI);
+            Projection = Matrix.CreatePerspectiveFieldOfView(cappedFOV, Game.GraphicsDevice.Viewport.AspectRatio, 0.05f, 1000.0f);
+        }
+
+        public Matrix Projection {
             get;
             protected set;
         }
@@ -50,15 +75,20 @@ namespace Procedural
         }
 
         public Camera(Game game, Vector3 position, Vector3 rotation, float speed) : base(game) {
-            cameraSpeed = speed;
+            MoveSpeed = speed;
 
-            ProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(fieldOfView, Game.GraphicsDevice.Viewport.AspectRatio, 0.05f, 1000.0f);
+            ViewDistance = 1000.0f;
+            MouseRotationScaleX = 1;
+            MouseRotationScaleY = 1;
+
+            UpdateProjectionMatrix();
 
             MoveTo(position, rotation);
             previousMouseState = Mouse.GetState();
             MouseLock = true;
+            mouseDown = false;
+            mouseDownPos = new Vector2(0, 0);
         }
-        
 
         private void MoveTo(Vector3 pos, Vector3 rot) {
             Position = pos;
@@ -89,17 +119,17 @@ namespace Procedural
             Vector3 moveVector = Vector3.Zero;
 
             if (keyboard.IsKeyDown(Keys.W))
-                Position += new Vector3(-View.Forward.X, 0, View.Forward.Z) * dt * cameraSpeed;
+                Position += new Vector3(-View.Forward.X, 0, View.Forward.Z) * dt * MoveSpeed;
             if (keyboard.IsKeyDown(Keys.S))
-                Position -= new Vector3(-View.Forward.X, 0, View.Forward.Z) * dt * cameraSpeed;
+                Position -= new Vector3(-View.Forward.X, 0, View.Forward.Z) * dt * MoveSpeed;
             if (keyboard.IsKeyDown(Keys.A))
-                Position += new Vector3(View.Forward.Z, 0, View.Forward.X) * dt * cameraSpeed;
+                Position += new Vector3(View.Forward.Z, 0, View.Forward.X) * dt * MoveSpeed;
             if (keyboard.IsKeyDown(Keys.D))
-                Position -= new Vector3(View.Forward.Z, 0, View.Forward.X) * dt * cameraSpeed;
+                Position -= new Vector3(View.Forward.Z, 0, View.Forward.X) * dt * MoveSpeed;
             if (keyboard.IsKeyDown(Keys.Q))
-                Position -= new Vector3(0, 1, 0) * dt * cameraSpeed;
+                Position -= new Vector3(0, 1, 0) * dt * MoveSpeed;
             if (keyboard.IsKeyDown(Keys.E))
-                Position += new Vector3(0, 1, 0) * dt * cameraSpeed;
+                Position += new Vector3(0, 1, 0) * dt * MoveSpeed;
 
             if (moveVector != Vector3.Zero) {
              //   moveVector.Normalize(); // normalize vec to stop diagonal speed boost
@@ -111,25 +141,29 @@ namespace Procedural
 
         private void MouseControls(GameTime gameTime)
         {
-            currentMouseState = Mouse.GetState();
-            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+            currentMouseState = Mouse.GetState();
+
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             float deltaX;
             float deltaY;
 
-            if (currentMouseState != previousMouseState)
-            {
+            if (currentMouseState.RightButton == ButtonState.Pressed) {
+                if (mouseDown == false)
+				{
+                    mouseDownPos = new Vector2(currentMouseState.X, currentMouseState.Y);
+                    mouseDown = true;
+				}
 
-                fieldOfView += (currentMouseState.ScrollWheelValue - previousMouseState.ScrollWheelValue) * dt * 0.01f;
+                deltaX = currentMouseState.X - mouseDownPos.X;
+                deltaY = currentMouseState.Y - mouseDownPos.Y;
 
-                ProjectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.Clamp(fieldOfView, 0.00001f, MathHelper.Pi - 0.00001f), Game.GraphicsDevice.Viewport.AspectRatio, 0.05f, 1000.0f);
 
-                deltaX = currentMouseState.X - (Game.GraphicsDevice.Viewport.Width / 2);
-                deltaY = currentMouseState.Y - (Game.GraphicsDevice.Viewport.Height / 2);
-
-                mouseRotationBuffer.X -= 0.015f * deltaX * dt;
-                mouseRotationBuffer.Y -= 0.015f * deltaY * dt;
+                Mouse.SetPosition((int)mouseDownPos.X, (int)mouseDownPos.Y);
+                
+                mouseRotationBuffer.X -= 0.005f * deltaX * MouseRotationScaleX;
+                mouseRotationBuffer.Y -= 0.005f * deltaY * MouseRotationScaleY;
 
                 if (mouseRotationBuffer.Y < MathHelper.ToRadians(-75.0f))
                 {
@@ -143,14 +177,17 @@ namespace Procedural
 
                 Rotation = new Vector3(-MathHelper.Clamp(mouseRotationBuffer.Y, MathHelper.ToRadians(-75.0f), MathHelper.ToRadians(75.0f)), MathHelper.WrapAngle(mouseRotationBuffer.X), 0);
 
+            } else
+			{
+                mouseDown = false;
             }
 
+            FieldOfView -= (currentMouseState.ScrollWheelValue - previousMouseState.ScrollWheelValue)*0.01f;
+            previousMouseState = currentMouseState;
             deltaX = 0;
             deltaY = 0;
-            Mouse.SetPosition(Game.GraphicsDevice.Viewport.Width / 2, Game.GraphicsDevice.Viewport.Height / 2);
 
-
-            previousMouseState = currentMouseState;
+            
         }
 
         public override void Update(GameTime gameTime) {

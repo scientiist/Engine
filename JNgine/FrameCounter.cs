@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Procedural
+namespace JNgine
 {
 	public class FrameCounter: GameComponent
 	{

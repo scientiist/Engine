@@ -4,7 +4,22 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using JNgine;
+
+/* TODO:
+ * Geometric Primitive Entity
+ *  Cube
+ *  Torus
+ *  Cylinder
+ *  Sphere
+ *  
+ *  Wireframe Render
+ *  Console
+ *  
+ * 
+ * 
+ */
+
 
 namespace Procedural
 {
@@ -75,28 +90,33 @@ namespace Procedural
             Position = new Vector3(-4, 0, -4);
         }
 
-        public void Draw(GraphicsDevice g, Camera camera, BasicEffect effect)
+        public void Draw(GraphicsDevice g, Camera camera)
         {
 
-            effect.View = camera.View;
-            effect.Projection = camera.ProjectionMatrix;
+            Renderer.Line3D(camera, Position, Position + Direction, Color);
+            //effect.View = camera.View;
+           // effect.Projection = camera.Projection;
 
-            effect.CurrentTechnique.Passes[0].Apply();
-            var vertices = new[] { new VertexPositionColor(Position, Color), new VertexPositionColor(Position+Direction, Color) };
-            g.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
+            //effect.CurrentTechnique.Passes[0].Apply();
+           // var vertices = new[] { new VertexPositionColor(Position, Color), new VertexPositionColor(Position+Direction, Color) };
+           // g.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 1);
         }
     }
 
     public class Game1 : Game
     {
+
+        public Color SkyColor { get; set; }
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         Texture2D defaultTexture;
 
         #region GameComponents
         BasicEffect effect;
-        Camera camera;
+        public Camera Camera { get; private set; }
         FrameCounter frametracker;
+        public CommandBar Console { get; private set; }
         #endregion
 
         #region GameObjects
@@ -107,24 +127,30 @@ namespace Procedural
         DirectionalLight light;
         #endregion
 
-        bool mouseLocked;
-
         public Game1()
         {
+            SkyColor = Color.CornflowerBlue;
+
             graphics = new GraphicsDeviceManager(this);
             graphics.SynchronizeWithVerticalRetrace = false;
             this.IsFixedTimeStep = false;
+            this.IsMouseVisible = true;
+
             graphics.PreferredBackBufferWidth = 1280;
             graphics.PreferredBackBufferHeight = 720;
             Content.RootDirectory = "Content";
-            mouseLocked = true;
+ 
+            Window.AllowUserResizing = true;
+            Window.Title = "JNgine Testbench";
         }
 
         protected override void Initialize()
         {
-
-            camera = new Camera(this, new Vector3(10, 1, 5), Vector3.Zero, 15f);
-            Components.Add(camera);
+            Console = new CommandBar(this);
+            Window.TextInput += Console.OnTextInput;
+            Components.Add(Console);
+            Camera = new Camera(this, new Vector3(10, 1, 5), Vector3.Zero, 15f);
+            Components.Add(Camera);
             frametracker = new FrameCounter(this);
             Components.Add(frametracker);
             floor = new Floor(GraphicsDevice, 40, 40);
@@ -134,17 +160,19 @@ namespace Procedural
 
         protected override void LoadContent()
         {
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+            Renderer.Initialize(this);
+
 
             defaultTexture = Content.Load<Texture2D>("default");
 
             light = new DirectionalLight();
             light.Direction = new Vector3(0, -0.3f, 0.5f);
             light.Color = Color.Red;
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-            TextRenderer.Initialize(Content);
-            ShapeRenderer.Initialize(GraphicsDevice);
+            
             teapot = new MeshEntity(Content.Load<Model>("Teapot"));
-            teapot.Size = new Vector3(25, 25, 25);
+            teapot.Size = new Vector3(5, 5, 5);
+            teapot.Texture = defaultTexture;
             cube = new MeshEntity(Content.Load<Model>("cube"));
 
             cube.Position = new Vector3(0, 1, -5);
@@ -183,7 +211,12 @@ namespace Procedural
 
         protected override void Update(GameTime gameTime)
         {
+
+            Camera.Enabled = !Console.Open;
+
+
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
 
             TeapotUpdate(dt);
 
@@ -191,15 +224,6 @@ namespace Procedural
             if (keyboard.IsKeyDown(Keys.Escape))
                 Exit();
 
-            if (keyboard.IsKeyDown(Keys.OemTilde))
-            {
-                if (mouseLocked == false) {
-                    camera.MouseLock = !camera.MouseLock;
-                    mouseLocked = true;
-                }
-            } else {
-                mouseLocked = false;
-            }
             base.Update(gameTime);
         }
 
@@ -207,12 +231,12 @@ namespace Procedural
         {
             if (effect != null)
             {
-                effect.View = camera.View;
-                effect.Projection = camera.ProjectionMatrix;
+                effect.View = Camera.View;
+                effect.Projection = Camera.Projection;
 
-                int camX = (int)Math.Floor(camera.Position.X/16)*16;
+                int camX = (int)Math.Floor(Camera.Position.X/16)*16;
                 float camY = (0);
-                int camZ = (int)Math.Floor(camera.Position.Z/16)*16;
+                int camZ = (int)Math.Floor(Camera.Position.Z/16)*16;
 
                 for (int x = 0; x < 128; x++)
                 {
@@ -247,12 +271,10 @@ namespace Procedural
         {
             spriteBatch.Begin();
 
-            
-
-            ShapeRenderer.Rect(spriteBatch, new Color(0,0,0,0.5f), new Vector2(0, 0), new Vector2(200, 50));
-            TextRenderer.Print(spriteBatch, String.Format("fps: {0} ", Math.Floor(frametracker.GetAverageFramerate())), new Vector2(2, 0), Color.White);
-            TextRenderer.Print(spriteBatch, "campos"+ FormatVector(camera.Position), new Vector2(2, 12), Color.White);
-            TextRenderer.Print(spriteBatch, "camlookat"+ FormatVector(camera.View.Forward), new Vector2(2, 24), Color.White);
+            spriteBatch.Rect(new Color(0,0,0,0.5f), new Vector2(0, 0), new Vector2(200, 50));
+            spriteBatch.Print(Color.White, new Vector2(2, 0),  String.Format("fps: {0} ", Math.Floor(frametracker.GetAverageFramerate())));
+            spriteBatch.Print(Color.White, new Vector2(2, 12), "campos" + FormatVector(Camera.Position));
+            spriteBatch.Print(Color.White, new Vector2(2, 24), "camlookat" + FormatVector(Camera.View.Forward));
             
 
             spriteBatch.End();
@@ -260,18 +282,20 @@ namespace Procedural
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(SkyColor);
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.SamplerStates[0] = SamplerState.PointWrap;
 
-            light.Draw(GraphicsDevice, camera, effect);
-            teapot.Draw(GraphicsDevice, camera);
-            cube.Draw(GraphicsDevice, camera);
-            floor.Draw(camera, effect);
+            light.Draw(GraphicsDevice, Camera);
+            teapot.Draw(GraphicsDevice, Camera);
+            cube.Draw(GraphicsDevice, Camera);
+            floor.Draw(Camera, effect);
 
             DrawGrid();
             DrawDebugOverlay();
+
+            Console.Draw(spriteBatch);
 
             base.Draw(gameTime);
         }

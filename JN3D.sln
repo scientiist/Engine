@@ -3,9 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Procedural", "Procedural\Procedural.csproj", "{47EBAD24-10CB-4762-97C1-6E85BE9D9DEE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JN3D", "Procedural\JN3D.csproj", "{47EBAD24-10CB-4762-97C1-6E85BE9D9DEE}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "JNgine", "JNgine\JNgine.shproj", "{A0CDBD0E-3A41-42B7-9425-A838BC2C7383}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		JNgine\JNgine.projitems*{47ebad24-10cb-4762-97c1-6e85be9d9dee}*SharedItemsImports = 4
+		JNgine\JNgine.projitems*{a0cdbd0e-3a41-42b7-9425-a838bc2c7383}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

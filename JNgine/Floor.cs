@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Procedural
+namespace JNgine
 {
 	class Floor
 	{
@@ -46,7 +46,7 @@ namespace Procedural
 		public void Draw(Camera camera, BasicEffect effect) {
 			effect.VertexColorEnabled = true;
 			effect.View = camera.View;
-			effect.Projection = camera.ProjectionMatrix;
+			effect.Projection = camera.Projection;
 			effect.World = Matrix.Identity;
 
 			foreach(EffectPass pass in effect.CurrentTechnique.Passes) {

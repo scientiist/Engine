@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Procedural
+namespace JNgine
 {
 
     public static class Utils
@@ -69,7 +69,7 @@ namespace Procedural
                         if (basicEffect != null)
                         {
                             basicEffect.View = camera.View;
-                            basicEffect.Projection = camera.ProjectionMatrix;
+                            basicEffect.Projection = camera.Projection;
                             basicEffect.World = Matrix.CreateScale(Size) * Matrix;
                             if (Texture != null) {
                                 basicEffect.TextureEnabled = true;
@@ -88,7 +88,7 @@ namespace Procedural
                            // basicEffect.FogEnd            = lighting.FogEnd;
                            // lighting.ApplyLightSources(this, basicEffect);
                         } else {
-                            effect.Parameters["WorldViewProjection"].SetValue(Matrix.Identity * camera.View * camera.ProjectionMatrix);
+                            effect.Parameters["WorldViewProjection"].SetValue(Matrix.Identity * camera.View * camera.Projection);
                         }
                         graphics.SetVertexBuffer(part.VertexBuffer);
                         graphics.Indices = part.IndexBuffer;
