@@ -5,25 +5,11 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using JNgine;
-
-/* TODO:
- * Geometric Primitive Entity
- *  Cube
- *  Torus
- *  Cylinder
- *  Sphere
- *  
- *  Wireframe Render
- *  Console
- *  
- * 
- * 
- */
-
+using JNgine.Geometry;
+using JNgine.Primitives;
 
 namespace Procedural
 {
-
     public interface ILightSource {
         Vector3 Position { get; set; }
         Vector3 Direction { get; set; }
@@ -51,7 +37,7 @@ namespace Procedural
 
 		}
 
-        private void ApplyLightSource(MeshEntity entity, BasicEffect effect, ILightSource source)
+        private void ApplyLightSource(Mesh entity, BasicEffect effect, ILightSource source)
 		{
             Vector3 vtfo = (entity.Position - source.Position);
 
@@ -60,7 +46,7 @@ namespace Procedural
 		}
 
 
-        public void ApplyLightSources(MeshEntity entity, BasicEffect effect)
+        public void ApplyLightSources(Mesh entity, BasicEffect effect)
 		{
             ApplyLightSource(entity, effect, Source0);
             ApplyLightSource(entity, effect, Source1);
@@ -103,34 +89,48 @@ namespace Procedural
         }
     }
 
+
+
+    public interface IGameEnvironment
+	{
+        Color SkyColor { get; set; }
+
+	}
+
     public class Game1 : Game
     {
 
+        bool wireframeMode = false;
         public Color SkyColor { get; set; }
-
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         Texture2D defaultTexture;
 
+        KeyboardState previousKB;
+
         #region GameComponents
         BasicEffect effect;
         public Camera Camera { get; private set; }
-        FrameCounter frametracker;
+        public FrameCounter FrameTracker { get; private set; }
         public CommandBar Console { get; private set; }
         #endregion
 
         #region GameObjects
         Floor floor;
-        MeshEntity teapot;
-        MeshEntity cube;
-
+        Mesh teapot;
+        Mesh cube;
         DirectionalLight light;
+        Cube geomCube;
+        Cylinder geomCylinder;
+        Sphere geomSphere;
+        Torus geomTorus;
+
         #endregion
 
         public Game1()
         {
             SkyColor = Color.CornflowerBlue;
-
+            
             graphics = new GraphicsDeviceManager(this);
             graphics.SynchronizeWithVerticalRetrace = false;
             this.IsFixedTimeStep = false;
@@ -146,15 +146,21 @@ namespace Procedural
 
         protected override void Initialize()
         {
+            
             Console = new CommandBar(this);
-            Window.TextInput += Console.OnTextInput;
-            Components.Add(Console);
             Camera = new Camera(this, new Vector3(10, 1, 5), Vector3.Zero, 15f);
+            FrameTracker = new FrameCounter(this);
+
             Components.Add(Camera);
-            frametracker = new FrameCounter(this);
-            Components.Add(frametracker);
-            floor = new Floor(GraphicsDevice, 40, 40);
+            Components.Add(Console);
+            Components.Add(FrameTracker);
+
+            Window.TextInput += Console.OnTextInput;
+
+            floor = new Floor(GraphicsDevice, 10, 10);
+            floor.Color = new Color(1f, 1f, 1f);
             effect = new BasicEffect(GraphicsDevice);
+
             base.Initialize();
         }
 
@@ -163,64 +169,65 @@ namespace Procedural
             spriteBatch = new SpriteBatch(GraphicsDevice);
             Renderer.Initialize(this);
 
-
             defaultTexture = Content.Load<Texture2D>("default");
 
             light = new DirectionalLight();
             light.Direction = new Vector3(0, -0.3f, 0.5f);
             light.Color = Color.Red;
-            
-            teapot = new MeshEntity(Content.Load<Model>("Teapot"));
-            teapot.Size = new Vector3(5, 5, 5);
-            teapot.Texture = defaultTexture;
-            cube = new MeshEntity(Content.Load<Model>("cube"));
 
-            cube.Position = new Vector3(0, 1, -5);
-            cube.Size = new Vector3(2, 4, 2);
-            cube.Rotation = new Vector3(45, 0, 45);
-            cube.Texture = defaultTexture;
+            geomCube = new Cube(GraphicsDevice);
+            geomCube.Position = new Vector3(2, 1, 0);
+            geomCube.Color = new Color(1.0f, 0.0f, 0.0f);
+
+            geomCylinder = new Cylinder(GraphicsDevice, 5);
+            geomCylinder.Position = new Vector3(4, 1, 0);
+            geomCylinder.Color = new Color(1.0f, 1.0f, 0.0f);
+
+            geomSphere = new Sphere(GraphicsDevice, 3);
+            geomSphere.Position = new Vector3(6, 1, 0);
+            geomSphere.Color = new Color(0.0f, 1.0f, 0.0f);
+
+            geomTorus = new Torus(GraphicsDevice);
+            geomTorus.Position = new Vector3(8, 1, 0);
+            geomTorus.Color = new Color(0.0f, 1.0f, 1.0f);
+
+            teapot = new Mesh(Content.Load<Model>("Teapot")) {
+                Size = new Vector3(0.5f, 0.5f, 0.5f),
+                Position = new Vector3(10, 0, 0),
+                Texture = defaultTexture
+            };
+            
+
+            cube = new Mesh(Content.Load<Model>("cube")) {
+                Position = new Vector3(0, 1, -5),
+                Size = new Vector3(2, 4, 2),
+                Rotation = new Vector3(45, 0, 45),
+                Texture = defaultTexture
+            };
+
+            
         }
 
         protected override void UnloadContent(){}
 
-        private void TeapotUpdate(float dt)
-        {
-            KeyboardState keyboard = Keyboard.GetState();
-            if (keyboard.IsKeyDown(Keys.NumPad1))
-                teapot.Position.X += dt * 5;
-            if (keyboard.IsKeyDown(Keys.NumPad2))
-                teapot.Position.X -= dt * 5;
-            if (keyboard.IsKeyDown(Keys.NumPad3))
-                teapot.Position.Y += dt * 5;
-            if (keyboard.IsKeyDown(Keys.NumPad4))
-                teapot.Position.Y -= dt * 5;
-            if (keyboard.IsKeyDown(Keys.NumPad6))
-                teapot.Position.Z += dt * 5;
-            if (keyboard.IsKeyDown(Keys.NumPad7))
-                teapot.Position.Z -= dt * 5;
-            if (keyboard.IsKeyDown(Keys.Left))
-                cube.Rotation.Z += dt;
-            if (keyboard.IsKeyDown(Keys.Right))
-                cube.Rotation.Z -= dt;
-
-            if (keyboard.IsKeyDown(Keys.Up))
-                cube.Position.Z += dt * 2;
-            if (keyboard.IsKeyDown(Keys.Down))
-                cube.Position.Z -= dt * 2;
-        }
+        private void TeapotUpdate(float dt){}
 
         protected override void Update(GameTime gameTime)
         {
 
             Camera.Enabled = !Console.Open;
-
-
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-
             TeapotUpdate(dt);
 
             KeyboardState keyboard = Keyboard.GetState();
+
+            if (keyboard.IsKeyDown(Keys.F1) && !previousKB.IsKeyDown(Keys.F1))
+                wireframeMode = !wireframeMode;
+
+
+
+            previousKB = keyboard;
+
             if (keyboard.IsKeyDown(Keys.Escape))
                 Exit();
 
@@ -267,30 +274,43 @@ namespace Procedural
             return "{"+x.ToString()+", "+y.ToString()+", "+z.ToString()+"}";
         }
 
+
         private void DrawDebugOverlay()
         {
             spriteBatch.Begin();
 
-            spriteBatch.Rect(new Color(0,0,0,0.5f), new Vector2(0, 0), new Vector2(200, 50));
-            spriteBatch.Print(Color.White, new Vector2(2, 0),  String.Format("fps: {0} ", Math.Floor(frametracker.GetAverageFramerate())));
+            spriteBatch.Rect(new Color(0, 0, 0, 0.5f), new Vector2(0, 0), new Vector2(200, 50));
+            spriteBatch.Print(Color.White, new Vector2(2, 0), String.Format("fps: {0} ", Math.Floor(FrameTracker.GetAverageFramerate())));
             spriteBatch.Print(Color.White, new Vector2(2, 12), "campos" + FormatVector(Camera.Position));
             spriteBatch.Print(Color.White, new Vector2(2, 24), "camlookat" + FormatVector(Camera.View.Forward));
-            
 
             spriteBatch.End();
         }
-
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(SkyColor);
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.SamplerStates[0] = SamplerState.PointWrap;
+            if (wireframeMode)
+			{
+                RasterizerState rasterizerState = new RasterizerState();
+                rasterizerState.FillMode = FillMode.WireFrame;
+                GraphicsDevice.RasterizerState = rasterizerState;
+            } else
+			{
+                GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+			}
+            
 
             light.Draw(GraphicsDevice, Camera);
             teapot.Draw(GraphicsDevice, Camera);
-            cube.Draw(GraphicsDevice, Camera);
-            floor.Draw(Camera, effect);
+            //cube.Draw(GraphicsDevice, Camera);
+            geomCube.Draw(GraphicsDevice, Camera);
+            geomCylinder.Draw(GraphicsDevice, Camera);
+            geomSphere.Draw(GraphicsDevice, Camera);
+            geomTorus.Draw(GraphicsDevice, Camera);
+            floor.Draw(GraphicsDevice, Camera);
 
             DrawGrid();
             DrawDebugOverlay();

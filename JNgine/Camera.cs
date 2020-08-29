@@ -22,6 +22,10 @@ namespace JNgine
         protected float fieldOfView = MathHelper.PiOver4;
 
 
+        public Color Ambient { get; set; }
+        public Color FogColor { get; set; }
+        public float FogStart { get; set; }
+        public float FogEnd { get; set; }
         public float ViewDistance { get; set; }
 
         public float MouseRotationScaleX { get; set; }
@@ -80,6 +84,11 @@ namespace JNgine
             ViewDistance = 1000.0f;
             MouseRotationScaleX = 1;
             MouseRotationScaleY = 1;
+
+            Ambient = new Color(0.0f, 0.0f, 0.0f);
+            FogColor = new Color(1.0f, 1.0f, 1.0f);
+            FogStart = 10;
+            FogEnd = 20;
 
             UpdateProjectionMatrix();
 

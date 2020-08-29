@@ -17,20 +17,28 @@ namespace JNgine
         }
 	}
 
-    public class MeshEntity
+    public class Mesh: IGeometry3D, IDisposable
     {
-        Model model;
-
-
+		#region Properties
+		public Vector3 Position { get; set; }
+        public Vector3 Rotation { get; set; }
         public Color Color { get; set; }
         public Color SpecularColor { get; set; }
-        public float Alpha { get; set; }
-
+        public float Opacity { get; set; }
         public Texture2D Texture { get; set; }
+        public Vector3 Size { get; set; }
+        public Quaternion RotationQuaternion
+        {
+            get { return Quaternion.CreateFromYawPitchRoll(Rotation.X, Rotation.Y, Rotation.Z); }
+        }
+        public Matrix WorldMatrix
+        {
+            get { return Matrix.CreateFromQuaternion(RotationQuaternion) * Matrix.CreateTranslation(Position); }
+        }
+        #endregion
+        Model model;
 
-        public Vector3 Size;
-
-        public MeshEntity(Model model)
+        public Mesh(Model model)
         {
             this.model = model;
             Position = new Vector3(0,0,0);
@@ -39,22 +47,17 @@ namespace JNgine
             Color = new Color(1.0f, 1.0f, 1.0f);
         }
 
-        public Vector3 Position;
-
-        public Vector3 Rotation;
-
-        public Quaternion RotationQuaternion
+        ~Mesh()
 		{
-            get { return Quaternion.CreateFromYawPitchRoll(Rotation.X, Rotation.Y, Rotation.Z); }
+            Dispose();
 		}
 
-        public Matrix Matrix
-        {
-            get { return Matrix.CreateFromQuaternion(RotationQuaternion) * Matrix.CreateTranslation(Position);  }
-             
-        }
+        public void Dispose()
+		{
 
-        public void Draw(GraphicsDevice graphics, Camera camera)//, Lighting lighting)
+		}
+        
+        public void Draw(GraphicsDevice graphics, Camera camera)
         {
 
             foreach (ModelMesh mesh in model.Meshes)
@@ -70,22 +73,23 @@ namespace JNgine
                         {
                             basicEffect.View = camera.View;
                             basicEffect.Projection = camera.Projection;
-                            basicEffect.World = Matrix.CreateScale(Size) * Matrix;
+                            basicEffect.World = Matrix.CreateScale(Size) * WorldMatrix;
                             if (Texture != null) {
                                 basicEffect.TextureEnabled = true;
                                 basicEffect.Texture = Texture;
                             }
-                            basicEffect.SpecularColor = Utils.VectorFromColor(SpecularColor);
+                            basicEffect.SpecularColor = SpecularColor.ToVector3();
+                            basicEffect.DiffuseColor = Color.ToVector3();
                             basicEffect.SpecularPower = 0.5f;
                             basicEffect.LightingEnabled = true;
                             basicEffect.EnableDefaultLighting();
-                            basicEffect.DirectionalLight0.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f)*Position;
-                            basicEffect.DirectionalLight0.Direction = new Vector3(1, 0, 0);
-                            basicEffect.DirectionalLight0.SpecularColor = new Vector3(1, 1, 1);
-                            //basicEffect.AmbientLightColor = Utils.VectorFromColor(lighting.Ambient);
-                           // basicEffect.FogColor          = Utils.VectorFromColor(lighting.FogColor);
-                           // basicEffect.FogStart          = lighting.FogStart;
-                           // basicEffect.FogEnd            = lighting.FogEnd;
+                            //basicEffect.DirectionalLight0.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f)*Position;
+                            //basicEffect.DirectionalLight0.Direction = new Vector3(1, 0, 0);
+                            //basicEffect.DirectionalLight0.SpecularColor = new Vector3(1, 1, 1);
+                            basicEffect.AmbientLightColor = camera.Ambient.ToVector3();
+                            basicEffect.FogColor          = camera.FogColor.ToVector3();
+                            basicEffect.FogStart          = camera.FogStart;
+                            basicEffect.FogEnd            = camera.FogEnd;
                            // lighting.ApplyLightSources(this, basicEffect);
                         } else {
                             effect.Parameters["WorldViewProjection"].SetValue(Matrix.Identity * camera.View * camera.Projection);

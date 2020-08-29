@@ -10,17 +10,27 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Content\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Shaders\" />
   </ItemGroup>
   <ItemGroup>
     <MonoGameContentReference Include="$(MSBuildThisFileDirectory)Content\Content.mgcb" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Camera.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\Cube.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\Cylinder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\IGeometry3D.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\ProceduralFloor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\Sphere.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\Torus.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Scene.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)VertexPositionNormal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CommandBar.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Floor.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FrameCounter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\GeometricPrimitive.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Maths.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)MeshEntity.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Geometry\Mesh.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OrthographicCamera.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Renderer.cs" />
   </ItemGroup>

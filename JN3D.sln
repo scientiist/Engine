@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JN3D", "Procedural\JN3D.csp
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "JNgine", "JNgine\JNgine.shproj", "{A0CDBD0E-3A41-42B7-9425-A838BC2C7383}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Editor", "MonoGame.WpfCore\MonoGame.WpfCore\Editor.csproj", "{B78A4804-A3C7-425E-B7B0-6BE87156357C}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		JNgine\JNgine.projitems*{47ebad24-10cb-4762-97c1-6e85be9d9dee}*SharedItemsImports = 4
@@ -21,6 +23,10 @@ Global
 		{47EBAD24-10CB-4762-97C1-6E85BE9D9DEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47EBAD24-10CB-4762-97C1-6E85BE9D9DEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47EBAD24-10CB-4762-97C1-6E85BE9D9DEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B78A4804-A3C7-425E-B7B0-6BE87156357C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B78A4804-A3C7-425E-B7B0-6BE87156357C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B78A4804-A3C7-425E-B7B0-6BE87156357C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B78A4804-A3C7-425E-B7B0-6BE87156357C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
